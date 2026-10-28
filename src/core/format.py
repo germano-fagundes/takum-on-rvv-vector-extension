@@ -17,7 +17,7 @@ class Takum:
         return cls(signal, direction, regime, mantissa, total_bits, exponent)
 
     @classmethod
-    def from_unpacked(cls, unpacked: 'UnpackedFormat', total_bits: int): # type: ignore
+    def from_unpacked(cls, unpacked: 'UnpackedFormat', total_bits: int):
         if unpacked.mantissa_grs == 0:
             return cls(0, 0, 0, 0, total_bits, 0)
             
