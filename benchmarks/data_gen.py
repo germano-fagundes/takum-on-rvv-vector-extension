@@ -1,4 +1,7 @@
-from mpmath import mp
+from mpmath import mp, matrix
+
+from src.core.format import Takum
+
 mp.prec = 113  # type: ignore
 from math import ceil
 from random import randint
@@ -17,6 +20,7 @@ def generate_sparse_matrix(m: int, n: int):
 
     return matrix
 
+
 def generate_sparse_array(n: int):
     if n < 2:
         raise ValueError('n (length) must be at least 2.')
@@ -27,3 +31,8 @@ def generate_sparse_array(n: int):
         array[randint(0,n-1), 0] = mp.rand()
 
     return array
+
+
+def float128_to_takum(matrix: matrix, takum_bits: int):
+    takum_matrix = [[Takum.from_mpf(matrix[i, j], takum_bits) for j in range(matrix.cols)] for i in range(matrix.rows)]
+    return takum_matrix

@@ -1,3 +1,7 @@
+from mpmath import mp, mpf, log, floor
+
+mp.prec = 113  # type: ignore
+
 class Takum:
     def __init__(self, signal: int, direction: int, regime: int, mantissa: int, total_bits: int, exponent: int|None=None):
         self.signal = signal
@@ -32,20 +36,7 @@ class Takum:
                 normalized_exponent += 1
                 
         result_direction = 1 if normalized_exponent >= 0 else 0
-        result_regime = 0
-        result_exponent = 0
-
-        abs_exp = abs(normalized_exponent)
-        if abs_exp > 0:
-            for r in range(1, 8):
-                base_scale = (1 << (r + 1)) - 2
-                max_exp_value = (1 << r) - 1
-                max_regime_capacity = base_scale + max_exp_value
-                
-                if abs_exp <= max_regime_capacity:
-                    result_regime = r
-                    result_exponent = abs(abs_exp - base_scale)
-                    break
+        result_regime, result_exponent = cls.calculate_regime(abs(normalized_exponent))
         
         final_length = final_mantissa.bit_length()
         shift_amount = max(0, final_length - 1)
@@ -54,6 +45,56 @@ class Takum:
 
         return cls(unpacked.signal, result_direction, result_regime, final_mantissa, total_bits, result_exponent)
 
+    @classmethod
+    def calculate_regime(cls, abs_exp: int) -> tuple[int, int]:
+        if abs_exp == 0:
+            return 0, 0
+            
+        for r in range(1, 8):
+            base_scale = (1 << (r + 1)) - 2
+            max_exp_value = (1 << r) - 1
+            max_regime_capacity = base_scale + max_exp_value
+            
+            if abs_exp <= max_regime_capacity:
+                physical_exponent = abs_exp - base_scale
+                return r, physical_exponent
+                
+        max_exp_value_7 = (1 << 7) - 1
+        return 7, max_exp_value_7
+
+    @classmethod
+    def from_mpf(cls, n: mpf, total_bits: int):
+        if n == 0:
+            return Takum(0, 0, 0, 0, total_bits, 0)
+
+        signal = 0 if n > 0 else 1
+        module = abs(n)
+        exponent = int(floor(log(module, 2)))
+        direction = 1 if exponent >= 0 else 0
+
+        abs_exp = abs(exponent)
+        regime, physical_exp = cls.calculate_regime(abs_exp)
+        mantissa_length = total_bits - 5 - regime
+
+        if mantissa_length < 0:
+            regime = total_bits - 5
+            physical_exp = (1 << regime) - 1
+            final_mantissa = 0
+        else:
+            normalization = (module / mp.power(2, exponent)) - 1
+            raw_slicing = normalization * mp.power(2, mantissa_length + 3)
+            bin_slicing = int(raw_slicing)
+
+            grs_bits = bin_slicing & 0b111 
+            final_mantissa = bin_slicing >> 3
+            
+            if grs_bits >= 0b100:
+                final_mantissa += 1
+                if final_mantissa & (final_mantissa - 1) == 0:
+                    final_mantissa >>= 1
+                    physical_exp += 1
+
+        return cls(signal, direction, regime, final_mantissa, total_bits, physical_exp)
 
 class UnpackedFormat:
     def __init__(self, signal: int, exponent: int, mantissa_grs: int, mantissa_length: int):
