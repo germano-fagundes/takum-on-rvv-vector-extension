@@ -45,6 +45,27 @@ class Takum:
 
         return cls(unpacked.signal, result_direction, result_regime, final_mantissa, total_bits, result_exponent)
 
+    def to_mpf(self) -> mpf:
+        if self.regime == 0 and self.direction == 0 and self.exponent == 0 and self.mantissa == 0:
+            return mp.mpf(0.0)
+
+        exponent = UnpackedFormat.get_unbiased_exponent(self)
+        mantissa_length = self.total_bits - 5 - self.regime
+        
+        if mantissa_length <= 0:
+            fraction = mp.mpf(0.0)
+        else:
+            fraction = mp.fdiv(self.mantissa, mp.power(2, mantissa_length))
+            
+        significand = mp.fadd(1.0, fraction)
+        
+        mpf_result = mp.fmul(significand, mp.power(2, exponent))
+        
+        if self.signal == 1:
+            mpf_result = mp.fneg(mpf_result)
+            
+        return mpf_result # type: ignore
+
     @classmethod
     def calculate_regime(cls, abs_exp: int) -> tuple[int, int]:
         if abs_exp == 0:

@@ -1,4 +1,6 @@
 from mpmath import mp, matrix
+import numpy as np
+import ml_dtypes
 
 from src.core.format import Takum
 
@@ -36,3 +38,16 @@ def generate_sparse_array(n: int):
 def float128_to_takum(matrix: matrix, takum_bits: int):
     takum_matrix = [[Takum.from_mpf(matrix[i, j], takum_bits) for j in range(matrix.cols)] for i in range(matrix.rows)]
     return takum_matrix
+
+def fp128_downcasting(matrix: matrix, fp_bits: int):
+    if fp_bits != 8 and fp_bits != 16 and fp_bits != 32:
+        raise ValueError('fp_bits must be either 8, 16 or 32.')
+
+    float64_matrix = np.array(matrix.tolist(), dtype=float)
+
+    if fp_bits == 32:
+        return float64_matrix.astype(np.float32)
+    if fp_bits == 16:
+        return float64_matrix.astype(np.float16)
+    if fp_bits == 8:
+        return float64_matrix.astype(ml_dtypes.float8_e4m3fn)
