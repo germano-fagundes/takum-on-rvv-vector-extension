@@ -37,11 +37,23 @@ class Takum:
                 
         result_direction = 1 if normalized_exponent >= 0 else 0
         result_regime, result_exponent = cls.calculate_regime(abs(normalized_exponent))
-        
-        final_length = final_mantissa.bit_length()
-        shift_amount = max(0, final_length - 1)
-        mask_remove_hidden = (1 << shift_amount) - 1
-        final_mantissa &= mask_remove_hidden
+
+        target_mantissa_length = total_bits - 5 - result_regime
+
+        if target_mantissa_length < 0:
+            result_regime = total_bits - 5
+            result_exponent = (1 << result_exponent) - 1
+            final_mantissa = 0
+        else:
+            final_length = final_mantissa.bit_length()
+            shift_amount = max(0, final_length - 1)
+            mask_remove_hidden = (1 << shift_amount) - 1
+            final_mantissa &= mask_remove_hidden
+
+            if shift_amount > target_mantissa_length:
+                final_mantissa >>= (shift_amount - target_mantissa_length)
+            if shift_amount < target_mantissa_length:
+                final_mantissa <<= (target_mantissa_length - shift_amount)
 
         return cls(unpacked.signal, result_direction, result_regime, final_mantissa, total_bits, result_exponent)
 
@@ -140,7 +152,7 @@ class UnpackedFormat:
         base_scale = 0 if r == 0 else (1 << (r + 1)) - 2
 
         if d == 0:
-            base_scale = -base_scale - 1
+            base_scale = -base_scale
             unbiased_exponent = base_scale - e if e is not None else base_scale
         else:
             unbiased_exponent = base_scale + e if e is not None else base_scale
@@ -151,9 +163,6 @@ class UnpackedFormat:
     def get_full_mantissa(takum: Takum) -> tuple[int, int]:
         mantissa_length = takum.total_bits - (5 + takum.regime)
         
-        if takum.mantissa == 0:
-            return 0, mantissa_length
-
         true_significand = (1 << mantissa_length) | takum.mantissa
 
         # adds bits G, R and S
