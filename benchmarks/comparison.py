@@ -13,16 +13,20 @@ def compare(reference_result: matrix, takum_result: list[list[Takum]], fp_result
     takum_1d = [row[0] for row in takum_result]
     upcasted_takum = [t.to_mpf() for t in takum_1d]
 
-    relative_error_fp = [
-        [abs(reference_result[row, col] - upcasted_fp[row][col]) /
-         abs(reference_result[row, col]) if reference_result[row, col] != 0
-         else mp.mpf(0.0) for col in range(reference_result.cols)]
-         for row in range(reference_result.rows)]
-    
-    relative_error_takum = [
-        [abs(reference_result[row, col] - upcasted_takum[row][col]) /
-         abs(reference_result[row, col]) if reference_result[row, col] != 0
-         else mp.mpf(0.0) for col in range(reference_result.cols)]
-         for row in range(reference_result.rows)]
-    
+    relative_error_fp = []
+    relative_error_takum = []
+
+    for i in range(len(ref_1d)):
+        true_val = ref_1d[i]
+        
+        if true_val != 0:
+            err_fp = abs(true_val - upcasted_fp[i]) / abs(true_val)
+            err_tak = abs(true_val - upcasted_takum[i]) / abs(true_val)
+        else:
+            err_fp = mp.mpf(0.0)
+            err_tak = mp.mpf(0.0)
+            
+        relative_error_fp.append(err_fp)
+        relative_error_takum.append(err_tak)
+        
     return relative_error_fp, relative_error_takum
