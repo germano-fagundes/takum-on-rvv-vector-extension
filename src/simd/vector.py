@@ -1,5 +1,7 @@
 from src.core.format import Takum, UnpackedFormat
 from src.alu.scalar import add, sub, mul
+from mpmath import mp
+mp.prec = 113 # type: ignore
 
 def vtsetup(a: list[Takum], b: list[Takum]):
     if not a:
@@ -47,14 +49,14 @@ def vtdot(a: list[Takum], b: list[Takum]):
     if not a:
         raise ValueError('Vector operations cannot be performed on empty arrays.')
 
-    unpacked_a, unpacked_b, total_bits = vtsetup(a, b)
-    acc = UnpackedFormat(0, 0, 0, unpacked_a[0].mantissa_length)
+    acc_mpf = mp.mpf(0.0)
 
-    for ua, ub in zip(unpacked_a, unpacked_b):
-        product = mul(ua, ub)
-        acc = add(acc, product)
+    for ta, tb in zip(a, b):
+        val_a = ta.to_mpf()
+        val_b = tb.to_mpf()
+        acc_mpf = mp.fadd(acc_mpf, mp.fmul(val_a, val_b))
 
-    return Takum.from_unpacked(acc, total_bits)
+    return Takum.from_mpf(acc_mpf, a[0].total_bits) #type: ignore
 
 
 def vncvt(takum: Takum, new_total_bits: int):
@@ -70,8 +72,12 @@ def vncvt(takum: Takum, new_total_bits: int):
     dropped_bits = unpacked.mantissa_grs & bits_to_drop_mask
 
     unpacked.mantissa_grs >>= bits_to_drop
-    if dropped_bits > 0:
-        unpacked.mantissa_grs |= 1
+    half_way = 1 << (bits_to_drop - 1)
+    if dropped_bits > half_way:
+        unpacked.mantissa_grs += 1
+    elif dropped_bits == half_way:
+        if (unpacked.mantissa_grs & 1) == 1:
+            unpacked.mantissa_grs += 1
 
     unpacked.mantissa_length -= bits_to_drop
 

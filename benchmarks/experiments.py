@@ -106,13 +106,15 @@ def run_experiments():
     
     fp_m8, fp_p8, tk_m8, tk_p8, f8 = run_trial(mat_dyn, arr_dyn, 8)
     fp_m16d, fp_p16d, tk_m16d, tk_p16d, f16 = run_trial(mat_dyn, arr_dyn, 16)
+    fp_m32d, fp_p32d, tk_m32d, tk_p32d, f32 = run_trial(mat_dyn, arr_dyn, 32)
     
     print(f"-> FP8 sofreu Overflow/Underflow em {f8} valores (NaN/Inf)")
     print(f"-> FP16 sofreu Overflow/Underflow em {f16} valores (NaN/Inf)")
+    print(f"-> FP32 sofreu Overflow/Underflow em {f32} valores (NaN/Inf)")
     
-    plot_results('Exp 2: Estresse Dinâmico (8/16 bits)', ['8 bits', '16 bits'], 
-                 [fp_m8, fp_m16d], [tk_m8, tk_m16d],
-                 [fp_p8, fp_p16d], [tk_p8, tk_p16d])
+    plot_results('Exp 2: Estresse Dinâmico (8/16/32 bits)', ['8 bits', '16 bits', '32 bits'], 
+                 [fp_m8, fp_m16d, fp_m32d], [tk_m8, tk_m16d, tk_m32d],
+                 [fp_p8, fp_p16d, fp_p32d], [tk_p8, tk_p16d, tk_p32d])
 
 if __name__ == '__main__':
     run_experiments()

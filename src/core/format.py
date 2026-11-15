@@ -29,8 +29,9 @@ class Takum:
         final_mantissa = unpacked.mantissa_grs >> 3
         normalized_exponent = unpacked.exponent
         
-        if grs_bits >= 0b100:
+        if grs_bits > 0b100 or (grs_bits == 0b100 and (final_mantissa % 2) == 1):
             final_mantissa += 1
+            # A verificação de transbordo agora protege ambas as situações
             if final_mantissa & (final_mantissa - 1) == 0:
                 final_mantissa >>= 1
                 normalized_exponent += 1
@@ -42,7 +43,7 @@ class Takum:
 
         if target_mantissa_length < 0:
             result_regime = total_bits - 5
-            result_exponent = (1 << result_exponent) - 1
+            result_exponent = (1 << result_regime) - 1
             final_mantissa = 0
         else:
             final_length = final_mantissa.bit_length()
@@ -121,10 +122,11 @@ class Takum:
             grs_bits = bin_slicing & 0b111 
             final_mantissa = bin_slicing >> 3
             
-            if grs_bits >= 0b100:
+            if grs_bits > 0b100 or (grs_bits == 0b100 and (final_mantissa % 2) == 1):
                 final_mantissa += 1
-                if final_mantissa & (final_mantissa - 1) == 0:
-                    final_mantissa >>= 1
+
+                if final_mantissa == (1 << mantissa_length):
+                    final_mantissa = 0
                     physical_exp += 1
 
         return cls(signal, direction, regime, final_mantissa, total_bits, physical_exp)
@@ -152,7 +154,7 @@ class UnpackedFormat:
         base_scale = 0 if r == 0 else (1 << (r + 1)) - 2
 
         if d == 0:
-            base_scale = -base_scale
+            base_scale = -base_scale - 1
             unbiased_exponent = base_scale - e if e is not None else base_scale
         else:
             unbiased_exponent = base_scale + e if e is not None else base_scale

@@ -11,8 +11,12 @@ def add(a: UnpackedFormat, b: UnpackedFormat) -> UnpackedFormat:
         mask = (1 << delta) - 1
         dropped_bits = smaller.mantissa_grs & mask
         smaller.mantissa_grs >>= delta
-        if dropped_bits > 0:
-            smaller.mantissa_grs |= 1
+        half_way = 1 << (delta - 1)
+        if dropped_bits > half_way:
+            smaller.mantissa_grs += 1
+        elif dropped_bits == half_way:
+            if (smaller.mantissa_grs & 1) == 1:
+                smaller.mantissa_grs += 1
 
     if a.signal == b.signal:
         result_mantissa = a.mantissa_grs + b.mantissa_grs
@@ -37,8 +41,12 @@ def add(a: UnpackedFormat, b: UnpackedFormat) -> UnpackedFormat:
         bits_to_drop_mask = (1 << shift_delta) - 1 
         dropped_bits = result_mantissa & bits_to_drop_mask
         normalized_mantissa = result_mantissa >> shift_delta
-        if dropped_bits > 0:
-            normalized_mantissa |= 1
+        half_way = 1 << (shift_delta - 1)
+        if dropped_bits > half_way:
+            normalized_mantissa += 1
+        elif dropped_bits == half_way:
+            if (normalized_mantissa & 1) == 1:
+                normalized_mantissa += 1
         normalized_exponent += shift_delta
     elif shift_delta < 0:
         shift_amount = abs(shift_delta)
@@ -59,22 +67,15 @@ def mul(a: UnpackedFormat, b: UnpackedFormat) -> UnpackedFormat:
         return UnpackedFormat(0, 0, 0, max(a.mantissa_length, b.mantissa_length))
 
     result_signal = a.signal ^ b.signal
+    
+    # Produto exato sem truncamento imediato
     raw_mantissa = a.mantissa_grs * b.mantissa_grs
     current_length = raw_mantissa.bit_length()
     
-    normalized_exponent = (a.exponent + b.exponent + current_length - a.mantissa_length - b.mantissa_length - 7)
-    target_hidden_bit = max(a.mantissa_length, b.mantissa_length) + 3
-    shift_delta = (current_length - 1) - target_hidden_bit
+    # O tamanho da mantissa resultante é a soma dos comprimentos originais + bits GRS
+    new_mantissa_length = a.mantissa_length + b.mantissa_length + 3
     
-    normalized_mantissa = raw_mantissa
-
-    if shift_delta > 0:
-        mask = (1 << shift_delta) - 1
-        dropped_bits = raw_mantissa & mask
-        normalized_mantissa = raw_mantissa >> shift_delta
-        if dropped_bits > 0:
-            normalized_mantissa |= 1
-    elif shift_delta < 0:
-        normalized_mantissa = raw_mantissa << abs(shift_delta)
-
-    return UnpackedFormat(result_signal, normalized_exponent, normalized_mantissa, target_hidden_bit - 3)
+    normalized_exponent = (a.exponent + b.exponent + current_length - a.mantissa_length - b.mantissa_length - 7)
+    
+    # Retorna o formato desempacotado com a mantissa crua e tamanho expandido
+    return UnpackedFormat(result_signal, normalized_exponent, raw_mantissa, new_mantissa_length)
