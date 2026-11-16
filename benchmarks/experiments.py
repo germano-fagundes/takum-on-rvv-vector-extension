@@ -99,33 +99,47 @@ def plot_results(title, labels, fp_m, tak_m, fp_p, tak_p):
     plt.savefig(f"{safe_title}.png", dpi=300)
     plt.close()
 
+def print_stats_table(exp_name: str, results: dict[int, dict]):
+    print(f"\n=== Telemetria Arquitetural: {exp_name} ===")
+    print(f"{'Bits':<6} | {'Insts (T/FP)':<15} | {'Redução':<9} | {'Ciclos (T/FP)':<15} | {'Falhas FP':<10} | {'Flags CSR (fflags)'}")
+    print("-" * 88)
+    for bits, st in results.items():
+        inst_str = f"{st['takum_insts']}/{st['fp_insts']}"
+        cyc_str = f"{st['takum_cycles']}/{st['fp_cycles']}"
+        fail_str = f"{st['fp_exceptions']}/50"
+        print(f"{bits:<6} | {inst_str:<15} | {st['inst_reduction_pct']:>7.2f}% | {cyc_str:<15} | {fail_str:<10} | {st['fp_fflags']}")
+
 def run_experiments():
-    print("Iniciando Experimento 1: Uniforme...")
+    os.makedirs("results", exist_ok=True)
+
+    print("Iniciando Experimento 1: Distribuição Uniforme (8/16/32 bits)...")
     mat_uni = generate_sparse_matrix(50, 50)
     arr_uni = generate_sparse_array(50)
-    
-    fp_m16, fp_p16, tk_m16, tk_p16, _ = run_trial(mat_uni, arr_uni, 16)
-    fp_m32, fp_p32, tk_m32, tk_p32, _ = run_trial(mat_uni, arr_uni, 32)
-    
-    plot_results('Exp 1: Distribuição Uniforme (16/32 bits)', ['16 bits', '32 bits'], 
-                 [fp_m16, fp_m32], [tk_m16, tk_m32],
-                 [fp_p16, fp_p32], [tk_p16, tk_p32])
-    
-    print("\nIniciando Experimento 2: Estresse Dinâmico...")
+
+    fp_m8u, fp_p8u, tk_m8u, tk_p8u, st8_u = run_trial(mat_uni, arr_uni, 8)
+    fp_m16u, fp_p16u, tk_m16u, tk_p16u, st16_u = run_trial(mat_uni, arr_uni, 16)
+    fp_m32u, fp_p32u, tk_m32u, tk_p32u, st32_u = run_trial(mat_uni, arr_uni, 32)
+
+    print_stats_table("Exp 1 - Uniforme", {8: st8_u, 16: st16_u, 32: st32_u})
+    plot_results(
+        'results/Exp 1: Distribuição Uniforme (8/16/32 bits)',
+        ['8 bits', '16 bits', '32 bits'],
+        [fp_m8u, fp_m16u, fp_m32u], [tk_m8u, tk_m16u, tk_m32u],
+        [fp_p8u, fp_p16u, fp_p32u], [tk_p8u, tk_p16u, tk_p32u]
+    )
+
+    print("\nIniciando Experimento 2: Estresse Dinâmico (8/16/32 bits)...")
     mat_dyn = generate_dynamic_sparse_matrix(50, 50)
     arr_dyn = generate_dynamic_sparse_array(50)
-    
-    fp_m8, fp_p8, tk_m8, tk_p8, stats8 = run_trial(mat_dyn, arr_dyn, 8)
-    fp_m16d, fp_p16d, tk_m16d, tk_p16d, stats16 = run_trial(mat_dyn, arr_dyn, 16)
-    fp_m32d, fp_p32d, tk_m32d, tk_p32d, stats32 = run_trial(mat_dyn, arr_dyn, 32)
-    
-    print(f"-> FP8:  {stats8['fp_exceptions']}/50 falhas | Redução insts Takum: {stats8['inst_reduction_pct']:.1f}% | Flags: {stats8['fp_fflags']}")
-    print(f"-> FP16: {stats16['fp_exceptions']}/50 falhas | Redução insts Takum: {stats16['inst_reduction_pct']:.1f}% | Flags: {stats16['fp_fflags']}")
-    print(f"-> FP32: {stats32['fp_exceptions']}/50 falhas | Redução insts Takum: {stats32['inst_reduction_pct']:.1f}% | Flags: {stats32['fp_fflags']}")
-    
-    plot_results('Exp 2: Estresse Dinâmico (8/16/32 bits)', ['8 bits', '16 bits', '32 bits'], 
-                 [fp_m8, fp_m16d, fp_m32d], [tk_m8, tk_m16d, tk_m32d],
-                 [fp_p8, fp_p16d, fp_p32d], [tk_p8, tk_p16d, tk_p32d])
 
-if __name__ == '__main__':
-    run_experiments()
+    fp_m8d, fp_p8d, tk_m8d, tk_p8d, st8_d = run_trial(mat_dyn, arr_dyn, 8)
+    fp_m16d, fp_p16d, tk_m16d, tk_p16d, st16_d = run_trial(mat_dyn, arr_dyn, 16)
+    fp_m32d, fp_p32d, tk_m32d, tk_p32d, st32_d = run_trial(mat_dyn, arr_dyn, 32)
+
+    print_stats_table("Exp 2 - Estresse Dinâmico", {8: st8_d, 16: st16_d, 32: st32_d})
+    plot_results(
+        'results/Exp 2: Estresse Dinâmico (8/16/32 bits)',
+        ['8 bits', '16 bits', '32 bits'],
+        [fp_m8d, fp_m16d, fp_m32d], [tk_m8d, tk_m16d, tk_m32d],
+        [fp_p8d, fp_p16d, fp_p32d], [tk_p8d, tk_p16d, tk_p32d]
+    )
