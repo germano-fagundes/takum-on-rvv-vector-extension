@@ -1,0 +1,65 @@
+=== Demonstração do Decodificador Takum (S, D, R, C, F) ===
+Valor:       0.75 | T8  -> {'S': 0, 'D': 0, 'R': '111', 'C': '', 'F': '100'} | Reconstruído: 0.75
+Valor:       0.75 | T16 -> {'S': 0, 'D': 0, 'R': '111', 'C': '', 'F': '10000000000'} | Reconstruído: 0.75
+Valor:       0.75 | T32 -> {'S': 0, 'D': 0, 'R': '111', 'C': '', 'F': '100000000000000000000000000'} | Reconstruído: 0.75
+------------------------------------------------------------------------------
+Valor:      -12.5 | T8  -> {'S': 1, 'D': 1, 'R': '010', 'C': '00', 'F': '1'} | Reconstruído: -12
+Valor:      -12.5 | T16 -> {'S': 1, 'D': 1, 'R': '010', 'C': '00', 'F': '100100000'} | Reconstruído: -12.5
+Valor:      -12.5 | T32 -> {'S': 1, 'D': 1, 'R': '010', 'C': '00', 'F': '1001000000000000000000000'} | Reconstruído: -12.5
+------------------------------------------------------------------------------
+Valor:      1e-05 | T8  -> {'S': 0, 'D': 0, 'R': '011', 'C': '1110', 'F': ''} | Reconstruído: 7.62939e-06
+Valor:      1e-05 | T16 -> {'S': 0, 'D': 0, 'R': '011', 'C': '1110', 'F': '0101000'} | Reconstruído: 1.00136e-05
+Valor:      1e-05 | T32 -> {'S': 0, 'D': 0, 'R': '011', 'C': '1110', 'F': '01001111100010110101100'} | Reconstruído: 1e-05
+------------------------------------------------------------------------------
+Valor:      1e+05 | T8  -> {'S': 0, 'D': 1, 'R': '100', 'C': '000', 'F': ''} | Reconstruído: 32768
+Valor:      1e+05 | T16 -> {'S': 0, 'D': 1, 'R': '100', 'C': '0001', 'F': '1000011'} | Reconstruído: 99840
+Valor:      1e+05 | T32 -> {'S': 0, 'D': 1, 'R': '100', 'C': '0001', 'F': '10000110101000000000000'} | Reconstruído: 100000
+------------------------------------------------------------------------------
+Iniciando Experimento 1: Distribuição Uniforme (8/16/32 bits)...
+
+=== Telemetria Arquitetural: Exp 1 - Uniforme ===
+Bits   | Insts (T/FP)    | Redução   | Ciclos (T/FP)   | Falhas FP  | Flags CSR (fflags)
+----------------------------------------------------------------------------------------
+8      | 400/700         |   42.86% | 1150/2150       | 32/50      | {'NV': 0, 'DZ': 0, 'OF': 0, 'UF': 32, 'NX': 32}
+16     | 800/850         |    5.88% | 2150/2200       | 32/50      | {'NV': 0, 'DZ': 0, 'OF': 0, 'UF': 32, 'NX': 32}
+32     | 1400/1400       |    0.00% | 4100/4100       | 32/50      | {'NV': 0, 'DZ': 0, 'OF': 0, 'UF': 32, 'NX': 32}
+
+Iniciando Experimento 2: Estresse Dinâmico (8/16/32 bits)...
+c:\Users\Germano Mark1\Estudos\AOC\takum-on-rvv-vector-extension\benchmarks\data_gen.py:51: RuntimeWarning: overflow encountered in cast
+  return float64_matrix.astype(np.float16)
+c:\Users\Germano Mark1\Estudos\AOC\takum-on-rvv-vector-extension\src\simd\simulator.py:144: RuntimeWarning: invalid value encountered in dot
+  result = np.dot(row, vec)
+
+=== Telemetria Arquitetural: Exp 2 - Estresse Dinâmico ===
+Bits   | Insts (T/FP)    | Redução   | Ciclos (T/FP)   | Falhas FP  | Flags CSR (fflags)
+----------------------------------------------------------------------------------------
+8      | 400/700         |   42.86% | 1150/2150       | 47/50      | {'NV': 36, 'DZ': 0, 'OF': 0, 'UF': 11, 'NX': 11}
+16     | 800/850         |    5.88% | 2150/2200       | 46/50      | {'NV': 21, 'DZ': 0, 'OF': 1, 'UF': 24, 'NX': 25}
+32     | 1400/1400       |    0.00% | 4100/4100       | 38/50      | {'NV': 0, 'DZ': 0, 'OF': 0, 'UF': 38, 'NX': 38}
+
+=== Estatísticas de Distribuição (Distribuição Uniforme | 30 rodadas) ===
+[8 bits] IEEE 754 -> Mediana: 3.01e-02 | Média: 4.10e-02 | DP: 6.03e-02
+[8 bits] Takum    -> Mediana: 7.52e-02 | Média: 2.58e-01 | DP: 3.60e-01
+[16 bits] IEEE 754 -> Mediana: 2.38e-04 | Média: 2.72e-04 | DP: 2.04e-04
+[16 bits] Takum    -> Mediana: 2.22e-04 | Média: 7.28e-04 | DP: 1.03e-02
+[32 bits] IEEE 754 -> Mediana: 2.79e-08 | Média: 3.43e-08 | DP: 2.57e-08
+[32 bits] Takum    -> Mediana: 3.39e-09 | Média: 4.70e-09 | DP: 4.33e-09
+
+=== Estatísticas de Distribuição (Estresse Dinâmico | 30 rodadas) ===
+[8 bits] IEEE 754 -> Mediana: 1.00e+00 | Média: 9.98e-01 | DP: 3.92e-02
+[8 bits] Takum    -> Mediana: 6.01e-01 | Média: 5.69e-01 | DP: 2.50e-01
+c:\Users\Germano Mark1\Estudos\AOC\takum-on-rvv-vector-extension\benchmarks\data_gen.py:51: RuntimeWarning: overflow encountered in cast
+  return float64_matrix.astype(np.float16)
+c:\Users\Germano Mark1\Estudos\AOC\takum-on-rvv-vector-extension\src\simd\simulator.py:144: RuntimeWarning: invalid value encountered in dot
+  result = np.dot(row, vec)
+c:\Users\Germano Mark1\Estudos\AOC\takum-on-rvv-vector-extension\src\simd\simulator.py:144: RuntimeWarning: overflow encountered in dot
+  result = np.dot(row, vec)
+[16 bits] IEEE 754 -> Mediana: 1.00e+00 | Média: 7.29e-01 | DP: 4.42e-01
+[16 bits] Takum    -> Mediana: 1.13e-03 | Média: 1.48e-03 | DP: 1.35e-03
+[32 bits] IEEE 754 -> Mediana: 3.19e-08 | Média: 3.65e-08 | DP: 2.61e-08
+[32 bits] Takum    -> Mediana: 1.83e-08 | Média: 2.50e-08 | DP: 2.26e-08
+
+=== Kernel de Inferência ML (Zvtakum T16 -> T8) ===
+Instruções emitidas: {'vsetvli': 64, 'vle16.v': 128, 'vtdot.vv': 64, 'vtadd.vv': 1, 'vtsub.vv': 1, 'vtmul.vv': 1, 'vncvt.t.t': 1}
+Total de instruções: 260 | Ciclos: 848
+Erro relativo médio pós-requantização T8: 0.1095

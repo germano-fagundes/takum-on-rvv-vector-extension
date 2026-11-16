@@ -95,8 +95,10 @@ def plot_results(title, labels, fp_m, tak_m, fp_p, tak_p):
 
     plt.suptitle(title)
     plt.tight_layout()
-    safe_title = title.replace(':', '').replace('/', '_').replace(' ', '_')
-    plt.savefig(f"{safe_title}.png", dpi=300)
+    directory, filename = title.split('/', 1) if '/' in title else ('', title)
+    safe_name = filename.replace(':', '').replace('/', '_').replace(' ', '_')
+    out_path = os.path.join(directory, f"{safe_name}.png") if directory else f"{safe_name}.png"
+    plt.savefig(out_path, dpi=300)
     plt.close()
 
 def print_stats_table(exp_name: str, results: dict[int, dict]):

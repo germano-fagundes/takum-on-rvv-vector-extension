@@ -155,8 +155,7 @@ class RVVSimulator:
             self.fflags["OF"] += 1
             self.fflags["NX"] += 1
             self.exception_events += 1
-        elif val == 0.0 and np.any(row != 0) and np.any(vec != 0):
-            # Underflow para zero (flush-to-zero / subnormal underflow)
+        elif val == 0.0 and np.any((row != 0) & (vec != 0)):
             self.fflags["UF"] += 1
             self.fflags["NX"] += 1
             self.exception_events += 1
