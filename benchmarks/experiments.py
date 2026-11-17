@@ -93,9 +93,9 @@ def plot_results(title, labels, fp_m, tak_m, fp_p, tak_p):
     ax2.set_yscale('log')
     ax2.legend()
 
-    plt.suptitle(title)
     plt.tight_layout()
     directory, filename = title.split('/', 1) if '/' in title else ('', title)
+    plt.suptitle(filename)
     safe_name = filename.replace(':', '').replace('/', '_').replace(' ', '_')
     out_path = os.path.join(directory, f"{safe_name}.png") if directory else f"{safe_name}.png"
     plt.savefig(out_path, dpi=300)
